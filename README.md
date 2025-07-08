@@ -4,10 +4,6 @@
 
 ---
 
-## 🚀 Live Demo
-
-[🔗 Demo URL](https://your-demo-url.com)
-
 ---
 
 ## 🧠 Overview
