@@ -3,6 +3,7 @@ import { BlogPost } from '../types';
 import { TrendingUp, TrendingDown, ShoppingCart, DollarSign } from 'lucide-react';
 import { useZoraTrade } from '../hooks/useZoraTrade';
 import { useAccount } from 'wagmi';
+import { useZora } from '../hooks/useZora';
 
 interface TradingCardProps {
   post: BlogPost;
@@ -11,8 +12,9 @@ interface TradingCardProps {
 export function TradingCard({ post }: TradingCardProps) {
   const [amount, setAmount] = useState(1);
   const [isTrading, setIsTrading] = useState(false);
-  const { buyCoin, sellCoin, loading } = useZoraTrade();
+  // const { buyCoin, sellCoin, loading } = useZoraTrade();
   const { isConnected } = useAccount();
+  const { buyCoin, sellCoin, loading } = useZora();
 
   const handleBuy = async () => {
     if (!isConnected || !post.coinAddress) return;
@@ -21,7 +23,7 @@ export function TradingCard({ post }: TradingCardProps) {
     try {
       const result = await buyCoin(post.coinAddress, amount * 0.001); // Convert amount to ETH
       if (result.success) {
-        alert(`Successfully bought ${amount} tokens! Transaction: ${result.transactionHash}`);
+        alert(`Successfully bought ${amount} tokens! Transaction: ${result}`);
       } else {
         alert(`Buy failed: ${result.error}`);
       }
@@ -40,7 +42,7 @@ export function TradingCard({ post }: TradingCardProps) {
     try {
       const result = await sellCoin(post.coinAddress, amount);
       if (result.success) {
-        alert(`Successfully sold ${amount} tokens! Transaction: ${result.transactionHash}`);
+        alert(`Successfully sold ${amount} tokens! Transaction: ${result}`);
       } else {
         alert(`Sell failed: ${result.error}`);
       }
@@ -97,7 +99,7 @@ export function TradingCard({ post }: TradingCardProps) {
             className="flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 transition-colors"
           >
             <ShoppingCart className="w-4 h-4" />
-            <span>Buy</span>
+            <span>{isTrading ? 'Buying...' : 'Buy'}</span>
           </button>
           
           <button
@@ -106,7 +108,7 @@ export function TradingCard({ post }: TradingCardProps) {
             className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 transition-colors"
           >
             <DollarSign className="w-4 h-4" />
-            <span>Sell</span>
+            <span>{isTrading ? 'Selling...' : 'Sell'}</span>
           </button>
         </div>
       </div>

@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
 import { useAccount, useWriteContract, useSimulateContract } from 'wagmi';
 import { createCoinCall, DeployCurrency, InitialPurchaseCurrency, ValidMetadataURI, tradeCoin, TradeParameters } from '@zoralabs/coins-sdk';
-import { parseEther, formatEther, Address, Hex } from 'viem';
-import { base } from 'viem/chains';
+import { parseEther, formatEther, Address, Hex, createWalletClient, createPublicClient, http } from 'viem';
+import { base, baseSepolia } from 'viem/chains';
+import { privateKeyToAccount } from 'viem/accounts';
 
 interface CoinMetadata {
   title: string;
@@ -22,6 +23,19 @@ interface TradeResult {
   success: boolean;
   error?: string;
 }
+
+const account = privateKeyToAccount(import.meta.env.VITE_PRIVATE_KEY as `0x${string}`)
+
+const publicClient = createPublicClient({
+  chain: baseSepolia,
+  transport: http("https://rpc.ankr.com/base_sepolia/b60b4597fb0cfa1390b70d42d6ae32a80cf6d7754b8212dc38524753ed108842"),
+});
+ 
+const walletClient = createWalletClient({
+  account: account,
+  chain: baseSepolia,
+  transport: http("https://rpc.ankr.com/base_sepolia/b60b4597fb0cfa1390b70d42d6ae32a80cf6d7754b8212dc38524753ed108842"),
+});
 
 export function useZora() {
   const { address } = useAccount();
@@ -44,12 +58,12 @@ export function useZora() {
         symbol: (metadata.title || 'COIN').toUpperCase().replace(/\s+/g, '').slice(0, 6),
         uri: "ipfs://bafybeigoxzqzbnxsn35vq7lls3ljxdcwjafxvbvkivprsodzrptpiguysy" as ValidMetadataURI,
         payoutRecipient: address as Address,
-        chainId: base.id,
-        currency: DeployCurrency.ETH,
-        initialPurchase: {
-          currency: InitialPurchaseCurrency.ETH,
-          amount: parseEther("0.001"), // 0.001 ETH initial purchase
-        },
+        // chainId: baseSepolia.id,
+        // currency: DeployCurrency.ETH,
+        // initialPurchase: {
+        //   currency: InitialPurchaseCurrency.ETH,
+        //   amount: parseEther("0.001"), // 0.001 ETH initial purchase
+        // },
       };
 
       // Create configuration for wagmi
@@ -75,7 +89,8 @@ export function useZora() {
           }
         );
       });
-
+      
+      console.log(result)
       return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create coin';
@@ -97,8 +112,27 @@ export function useZora() {
     try {
       // For now, return a mock success since we need to implement trading with the new SDK
       // This would need to be updated with the actual trading implementation
+
+      const tradeParameters: TradeParameters = {
+        sell: { type: "eth" },
+        buy: {
+          type: "erc20",
+          address: coinAddress as Address,
+        },
+        amountIn: parseEther(ethAmount.toString()),
+        slippage: 0.05, // 5% slippage tolerance
+        sender: address,
+      };
+
+      const receipt = await tradeCoin({
+        tradeParameters,
+        walletClient,
+        account,
+        publicClient,
+      })
+
       return {
-        hash: '0x' + Math.random().toString(16).substr(2, 64),
+        hash: receipt.transactionHash,
         success: true
       };
     } catch (err) {
@@ -112,7 +146,7 @@ export function useZora() {
     } finally {
       setLoading(false);
     }
-  }, [address]);
+  }, [address, walletClient, publicClient]);
 
   const sellCoin = useCallback(async (coinAddress: string, tokenAmount: number): Promise<TradeResult> => {
     if (!address) {
@@ -125,8 +159,27 @@ export function useZora() {
     try {
       // For now, return a mock success since we need to implement trading with the new SDK
       // This would need to be updated with the actual trading implementation
+
+      const tradeParameters: TradeParameters = {
+        sell: {
+          type: "erc20",
+          address: coinAddress as Address,
+        },
+        buy: { type: "eth" },
+        amountIn: parseEther(tokenAmount.toString()),
+        slippage: 0.05,
+        sender: address,
+      };
+
+      const receipt = await tradeCoin({
+        tradeParameters,
+        walletClient,
+        account,
+        publicClient,
+      })
+
       return {
-        hash: '0x' + Math.random().toString(16).substr(2, 64),
+        hash: receipt.transactionHash,
         success: true
       };
     } catch (err) {
@@ -140,7 +193,7 @@ export function useZora() {
     } finally {
       setLoading(false);
     }
-  }, [address]);
+  }, [address, walletClient, publicClient]);
 
   const getPrice = useCallback(async (coinAddress: string) => {
     try {

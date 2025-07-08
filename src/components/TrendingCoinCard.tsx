@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, User, ShoppingCart, DollarSign, Eye } from 'lucide-react';
-import { useZoraTrade } from '../hooks/useZoraTrade';
+// import { useZoraTrade } from '../hooks/useZoraTrade';
 import { useAccount } from 'wagmi';
+import { useZora } from '../hooks/useZora';
 
 interface CoinData {
   id: string;
@@ -26,7 +27,7 @@ export function TrendingCoinCard({ coin, onViewDetails }: TrendingCoinCardProps)
   const [amount, setAmount] = useState(1);
   const [isTrading, setIsTrading] = useState(false);
   
-  const { buyCoin, sellCoin, loading } = useZoraTrade();
+  const { buyCoin, sellCoin, loading } = useZora();
   const { isConnected } = useAccount();
 
   // Mock price change for demo
@@ -40,7 +41,7 @@ export function TrendingCoinCard({ coin, onViewDetails }: TrendingCoinCardProps)
     try {
       const result = await buyCoin(coin.id, amount * 0.001); // Convert amount to ETH
       if (result.success) {
-        alert(`Successfully bought ${amount} tokens! Transaction: ${result.transactionHash}`);
+        alert(`Successfully bought ${amount} tokens! Transaction: ${result}`);
       } else {
         alert(`Buy failed: ${result.error}`);
       }
@@ -59,7 +60,7 @@ export function TrendingCoinCard({ coin, onViewDetails }: TrendingCoinCardProps)
     try {
       const result = await sellCoin(coin.id, amount);
       if (result.success) {
-        alert(`Successfully sold ${amount} tokens! Transaction: ${result.transactionHash}`);
+        alert(`Successfully sold ${amount} tokens! Transaction: ${result}`);
       } else {
         alert(`Sell failed: ${result.error}`);
       }
@@ -139,7 +140,7 @@ export function TrendingCoinCard({ coin, onViewDetails }: TrendingCoinCardProps)
               className="flex items-center justify-center space-x-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 transition-colors text-sm font-medium"
             >
               <ShoppingCart className="w-4 h-4" />
-              <span>Buy</span>
+              <span>{isTrading ? 'Buying...' : 'Buy'}</span>
             </button>
             
             <button
@@ -148,7 +149,7 @@ export function TrendingCoinCard({ coin, onViewDetails }: TrendingCoinCardProps)
               className="flex items-center justify-center space-x-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 transition-colors text-sm font-medium"
             >
               <DollarSign className="w-4 h-4" />
-              <span>Sell</span>
+              <span>{isTrading ? 'Selling...' : 'Sell'}</span>
             </button>
           </div>
 

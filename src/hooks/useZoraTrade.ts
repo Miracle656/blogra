@@ -42,7 +42,7 @@ export function useZoraTrade() {
       const receipt = await tradeCoin({
         tradeParameters,
         walletClient,
-        account: address as Address,
+        account,
         publicClient,
       });
 
@@ -82,7 +82,7 @@ export function useZoraTrade() {
       const receipt = await tradeCoin({
         tradeParameters,
         walletClient,
-        account: address as Address,
+        account,
         publicClient,
       });
 
